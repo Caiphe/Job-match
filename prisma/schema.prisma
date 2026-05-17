@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  resumes     Resume[]
+  jobSearches JobSearch[]
+}
+
+model Resume {
+  id          String   @id @default(cuid())
+  userId      String
+  fileName    String
+  rawText     String   @db.Text
+  skillProfile Json?
+  uploadedAt  DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobSearches JobSearch[]
+}
+
+model JobSearch {
+  id         String   @id @default(cuid())
+  userId     String
+  resumeId   String
+  location   String
+  keywords   String[]
+  createdAt  DateTime @default(now())
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume     Resume      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  results    JobResult[]
+}
+
+model JobResult {
+  id           String  @id @default(cuid())
+  jobSearchId  String
+  externalId   String
+  title        String
+  company      String
+  location     String
+  salary       String?
+  description  String  @db.Text
+  applyUrl     String
+  source       String
+  matchScore   Int?
+  matchedSkills String[]
+  matchReason  String?
+  savedAt      DateTime @default(now())
+
+  jobSearch    JobSearch @relation(fields: [jobSearchId], references: [id], onDelete: Cascade)
+
+  @@unique([jobSearchId, externalId])
+}
